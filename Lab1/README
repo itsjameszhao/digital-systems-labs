@@ -1,0 +1,10 @@
+Lab 1 README
+
+Partners:
+Christian Martinez
+James Zhao
+
+Description:
+The lab has been split up into three parts: sketch_part1, sketch_part2, and sketch_part3. In part 1, we implemented a simple addition function using assembly. In part 2, we implemented add, subtract and testasm. In part 3 we implemented the Fibonacci sequence function.
+
+See comments on explanations for each of these functions.

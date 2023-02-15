@@ -132,10 +132,6 @@ unsigned int testasm(unsigned char a, unsigned char b) {
 
 start_of_assembly_testasm:
    ; Your assembly language program goes here
-   ;
-   ; For this example, your program must not modify any registers other than 
-   ; r24 and r25. In other words, save and restore all the registers that
-   ; are modified by your code.
 
    ; Tell the compiler to move the arguments a, b into registers 
    ; r24, r25 respectively
@@ -205,7 +201,6 @@ diffval:
    sub r24, r25
    clr r25
    ret
-
 no_carry:
    ; r25 > r24
    sub r25, r24
