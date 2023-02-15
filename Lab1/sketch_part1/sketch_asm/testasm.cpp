@@ -30,6 +30,9 @@ start_of_assembly_testasm:
    ;  --- YOUR CODE GOES HERE ---
    ;       r24 = a, r25 = b
    ;
+
+   ; we add the lower bits, and clear out the top so that we can 
+   ; check for overflow (clearing does not affect carry bit)
    add r24, r25
    clr r25
    adc r25, r25

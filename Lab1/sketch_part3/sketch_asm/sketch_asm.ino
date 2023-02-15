@@ -15,6 +15,12 @@ void setup() {
   Serial.println(fib(4));
   Serial.println("Fib(10) is");
   Serial.println(fib(10));
+  Serial.println("Fib(11) is");
+  Serial.println(fib(11));
+  Serial.println("Fib(12) is");
+  Serial.println(fib(12));
+  Serial.println("Fib(13) is");
+  Serial.println(fib(13));
   pinMode (13, OUTPUT);
 }
 
