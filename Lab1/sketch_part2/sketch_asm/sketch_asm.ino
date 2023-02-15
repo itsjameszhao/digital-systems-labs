@@ -5,6 +5,8 @@ void setup() {
   Serial.begin(9600);
   Serial.println("The sum  of 255 and 1 is: ");
   Serial.println(sumval(255, 1));
+  Serial.println("The testasm  of 255 and 1 is: ");
+  Serial.println(testasm(255, 1));
   Serial.println("The absolute difference  of 255 and 1 is: ");
   Serial.println(diffval(255, 1));
   Serial.println("The absolute difference  of 1 and 255 is: ");
