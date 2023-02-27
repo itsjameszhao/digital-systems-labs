@@ -1,3 +1,4 @@
+#include "testasm.h"
 
 __attribute__((used))
 unsigned int sumval(unsigned char a, unsigned char b) {
