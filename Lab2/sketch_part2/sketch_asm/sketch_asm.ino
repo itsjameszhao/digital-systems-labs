@@ -1,34 +1,5 @@
 #include "font5x7.h"
 
-//int state;
-//
-//void setup() {
-//  // put your setup code here, to run once
-//  Serial.begin(9600);
-//  Serial.println("Hello");
-//  //pinMode(1, INPUT); 
-////
-//  int input[] = {8, 9, 10, 11, 12};
-//  int output[] = {1,2,3,4,5,6,7};
-//  for (int i = 0; i<7; i++) {
-//    DDRD |= (1 << output[i]);
-//  }
-//  for (int i = 0; i<5; i++) {
-//    DDRD |= (1 << input[i]);
-//    PORTD &= (0 << input[i]);
-//  }
-//  PORTD |= (1<<2);
-//}
-//
-//void loop() {
-//  // put your main code here, to run repeatedly:
-//  //digitalWrite(2, HIGH);
-//   PORTD |= (1<<2);
-//
-//  delay(10);
-//  
-//}
-
 void pin_mode_high(int pin){
   if(pin < 8) {
     DDRD |= (1 << pin);
@@ -58,7 +29,6 @@ void setup() {
   // initialize digital pin LED_BUILTIN as an output.
   for(int i = 1; i <= 12; i++){
     pin_mode_high(i);
-    //pinMode(i, OUTPUT);
   }
 }
 
@@ -66,20 +36,16 @@ void display(int row, int col) {
   // set all column pins to HIGH
   for(int i = 1; i<=5; i++){
     digital_write(i, HIGH);
-    //digitalWrite(i, HIGH);
   }
 
   // set all row pins to LOW
   for(int i = 6; i<=12; i++){
     digital_write(i, LOW);
-    //digitalWrite(i, LOW);
   }
 
   // turn on the specified LED
   digital_write(col, LOW);
   digital_write(row + 5, HIGH);
-  //digitalWrite(col, LOW);
-  //digitalWrite(row + 5, HIGH);
 }
 
 void display_ascii(int ascii_num) {
@@ -95,12 +61,14 @@ void display_ascii(int ascii_num) {
   }
 }
 
-void display_ascii_duration(int ascii_num, int microseconds){
-  //millis()?
-}
-
+int prev_time = millis();
+int current_digit = 0;
 
 // the loop function runs over and over again forever
 void loop() {
-  display_ascii(49);
+  if(millis() - 1000 >= prev_time) {
+    current_digit = (current_digit + 1) % 10;
+    prev_time = millis();
+  }
+  display_ascii(48 + current_digit);
 }
