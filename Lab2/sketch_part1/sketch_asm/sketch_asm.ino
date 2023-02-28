@@ -3,10 +3,12 @@ int state;
 void setup() {
   // put your setup code here, to run once
   Serial.begin(9600);
-  //  Serial.println("The sum of 255 and 255 is: ");
-  PORTD |= 1;
-  DDRD &= (0 << 2);
-  pinMode (13, OUTPUT);
+  Serial.println("The sum of 255 and 255 is: ");
+  DDRD &= ~(1 << 2);
+  PORTD |= (1 << 2);
+  //pinMode (13, OUTPUT);
+   
+
   state = 0;
 }
 
