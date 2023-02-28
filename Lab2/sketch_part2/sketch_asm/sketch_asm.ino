@@ -28,14 +28,23 @@ void digital_write(int pin, int high){
 void setup() {
   // initialize digital pin LED_BUILTIN as an output.
   for(int i = 1; i <= 12; i++){
-    pin_mode_high(i);
+    if (i != 2) {
+      pin_mode_high(i);
+    } else {
+      pin_mode_high(13);
+    }
   }
 }
 
 void display(int row, int col) {
   // set all column pins to HIGH
   for(int i = 1; i<=5; i++){
-    digital_write(i, HIGH);
+    if (i != 2) {
+      digital_write(i, HIGH);
+    }
+    else {
+      digital_write(13, HIGH);
+    }
   }
 
   // set all row pins to LOW
@@ -44,7 +53,12 @@ void display(int row, int col) {
   }
 
   // turn on the specified LED
-  digital_write(col, LOW);
+  if (col != 2) {
+    digital_write(col, LOW);
+  }
+  else {
+    digital_write(13, LOW);
+  }
   digital_write(row + 5, HIGH);
 }
 
