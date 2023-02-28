@@ -29,41 +29,37 @@
 //  
 //}
 
+void pin_mode_high(int pin){
+  DDRD |= (1 << pin);
+}
 
+void digital_write(int pin, int high){
+  if(high == HIGH){
+    PORTD |= (1 << pin);
+  } else {
+    PORTD &= ~(1 << pin);
+  }
+}
 
 // the setup function runs once when you press reset or power the board
 void setup() {
   // initialize digital pin LED_BUILTIN as an output.
-  pinMode(1, OUTPUT);
-  pinMode(2, OUTPUT);
-  pinMode(3, OUTPUT);
-  pinMode(4, OUTPUT);
-  pinMode(5, OUTPUT);
-  pinMode(6, OUTPUT);
-  pinMode(7, OUTPUT);
-  pinMode(8, OUTPUT);
-  pinMode(9, OUTPUT);
-  pinMode(10, OUTPUT);
-  pinMode(11, OUTPUT);
-  pinMode(12, OUTPUT);
+  for(int i = 1; i <= 12; i++){
+    //pin_mode_high(i);
+    pinMode(i, OUTPUT);
+  }
 }
 
 void display(int row, int col) {
   // set all column pins to HIGH
-  digitalWrite(1, HIGH);
-  digitalWrite(2, HIGH);
-  digitalWrite(3, HIGH);
-  digitalWrite(4, HIGH);
-  digitalWrite(5, HIGH);
+  for(int i = 1; i<=5; i++){
+    digitalWrite(i, HIGH);
+  }
 
   // set all row pins to LOW
-  digitalWrite(6, LOW);
-  digitalWrite(7, LOW);
-  digitalWrite(8, LOW);
-  digitalWrite(9, LOW);
-  digitalWrite(10, LOW);
-  digitalWrite(11, LOW);
-  digitalWrite(12, LOW);
+  for(int i = 6; i<=12; i++){
+    digitalWrite(i, LOW);
+  }
 
   // turn on the specified LED
   digitalWrite(col, LOW);
@@ -90,5 +86,5 @@ void display_ascii_duration(int ascii_num, int microseconds){
 
 // the loop function runs over and over again forever
 void loop() {
-  display_ascii(82);
+  display_ascii(48);
 }
