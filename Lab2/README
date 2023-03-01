@@ -5,3 +5,42 @@ Christian Martinez
 James Zhao
 
 Description:
+In this lab, we worked with digital IO to implement an LED counter that communicates with our Arduino using memory-mapped pins.
+The finished product (i.e. Part 3), is an LED counter that increments on button presses, until it wraps around back to 0 (counts from 0 to 9).
+The code for each part is commented for additional clarity.
+
+Part 1:
+In part 1, we had to implement a basic polling program that could detect when an external button was pressed by communicating using digital pins (PD2).
+The Arduino docs contained a very clear example of how such a program could work (https://docs.arduino.cc/tutorials/generic/digital-input-pullup).
+We initially followed the sample cricuit they provided, but this was weirdly producing incorrect behavior when we first implemented it (we accidentally created a proximity sensor).
+As such, we created our own passive pull up circuit using a circuit as described here 'https://www.electronics-tutorials.ws/logic/pull-up-resistor.html'.
+This worked as intended, but in our final iteration, we got the initial version to work so switched back to that as that seemed to be the intended solution.
+
+Part 2:
+In part 2, we worked with the 5x7 LED matrix to create a counter.
+For the circuitry, we worked solely with jumper wire-to-LED pin connections as we lacked shift registers.
+As such, we used more than the suggested pins when working with the LED.
+For the LED component, we used pins 1, 3, 4,...,13 to connect to the LED.
+The first 5 pins were connected to the columns in sequential order, and the following 7 pins were used for the rows of the LED, also in sequential order.
+This was to make it easier to understand what our program was meant to do as we interacted with different pins.
+Through all our testing, the use of additional pins did not interfere with performance or behavior (only when we initially tried using pin 0, but we quickly realized we were not able to use it).
+In our attached diagram, we show these connections (note: we don't use pin 2 for the LED as this was used for the button as per part 1's instructions)
+We used resistors on all connections to column pins on the LED, as this would ensure the minimum number of resistors were used to cover all possible circuits.
+The main structure of our code is as follows:
+We created our own versions of pinMode and digitalWrite, pin_mode and digital_write respectively, as necessary for our program.
+We have a global variable to track the number to display.
+On setup, all pins are set up to be able to write to (output).
+Our main loop increments the counter every second and calls a function display_ascii we wrote that displays a number as follows: using the provided font, we read in the byte data from the file, going column by column, we light up an individual LED for that row, sleep for a certain amount of microseconds, and move on to the next row, until the rows are exhausted and then we move on to the next column.
+This function is called many times each second to give the illusion that a digit is being displayed on the LED board.
+This will iterate through digits 0,...,9 until it wraps around and starts over.
+The program runs endlessly.
+
+
+Part 3:
+In this part, we combined the code from Part 1 & 2 as necessary: set up pin 2 to interact with the button, and the other pins for LED display.
+Instead of state being updated by a timer, we implemented an interrupt handler that changes state, and therefore digit displayed.
+By using attachInterrupt(), we attached a RISING change to pin 2 to call our function incrementInterrupt().
+incrementInterrupt will update the global variable that stores the digit to display.
+To account for noise on button presses, incrementInterrupt will only update the digit if the elapsed time since the last press is greater than 200ms.
+This is all that was needed to create a stable counter with our button and LED matrix.
+
