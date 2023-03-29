@@ -47,9 +47,9 @@ void setup() {
 void loop() {
   disp.clearDisplay();
   // Update ball based on speed location
+  int ballVelocity = (encoder0Pos - 128)`;
 
-  int ballVelocity = (encoder0Pos - 128);
-  
+  // Ball direction vars and speed
   _xBall += _xDir * ballVelocity;
   _yBall += _yDir * ballVelocity;
 
@@ -84,6 +84,7 @@ void tryDecrementEncoder() {
 }
 
 void encoderAInterrupt(){
+  // Filter out spurious interrupts
   unsigned long interrupt_time = millis();
   if (interrupt_time - last_interrupt_time > ENCODER_DELAY_FILTER) {
    doEncoderA();
@@ -92,6 +93,7 @@ void encoderAInterrupt(){
 }
 
 void encoderBInterrupt(){
+  // Filter out spurious interrupts
   unsigned long interrupt_time = millis();
   if (interrupt_time - last_interrupt_time > ENCODER_DELAY_FILTER) {
    doEncoderB();
@@ -100,10 +102,11 @@ void encoderBInterrupt(){
 }
 
 void doEncoderA(){ 
+  // Simply increment the encoder when we interrupt
   tryIncrementEncoder();
 } 
 
 void doEncoderB(){
+  // Simply decrement the encoder when we interrupt
   tryDecrementEncoder();
-  //Serial.println (encoder0Pos, DEC);         // use for debugging - remember to comment out
 }

@@ -8,8 +8,10 @@ void setup() {
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
+  // Read the photocell value
   int photocellValue = analogRead(photocellPin);
+
+  // Convert and display the photocell value
   int mappedPhotocellValue = map(photocellValue, 0, 1023, 0, 255);
   Serial.println(photocellValue);
   Serial.println(mappedPhotocellValue);
