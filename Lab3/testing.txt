@@ -1,0 +1,26 @@
+To ensure that our design worked correctly, we conducted the following tests for each part of the lab:
+
+Part 1 - Analog voltage input: photocell
+
+We tested the analogRead() function with different light levels and verified that the value returned by the function corresponds to the expected range (0-255).
+We tested the RGB LED to ensure that it is responsive to changes in the analog value and produces the correct color.
+We tested the serial interface to display the current value once every second and verified that the value displayed corresponds to the expected range (0-255).
+
+Part 2 - Time-encoded analog value: Ultrasonic range finder
+
+We tested the ultrasonic range finder with different distances and verified that the value returned by the function corresponds to the expected range (0-255).
+We tested the RGB LED to ensure that it changes color according to the distance measured by the ultrasonic range finder.
+We tested the photocell and verified that it sets the brightness of the RGB LED.
+
+Part 3 - SPI/I2C display
+
+We tested the rotary encoder code and verified that it correctly reads the state of the rotary encoder.
+We tested the bouncing ball on the OLED screen and verified that it moves around the screen according to the velocity of the rotary encoder.
+We tested the saturation feature of the rotary encoder to ensure that it works as expected.
+We tested the OLED screen using both the I2C and SPI communication protocols.
+We tested the OLED screen by drawing different shapes, lines, and texts on the screen using the Adafruit library and verified that they are displayed correctly.
+To ensure that our design is robust to unusual/unexpected inputs, we conducted the following tests:
+
+We tested the photocell in different lighting conditions to ensure that the output voltage is within the expected range and that the RGB LED produces the correct color.
+We tested the ultrasonic range finder with different obstacles and verified that it produces the correct distance values.
+We tested the rotary encoder by rotating it in both directions, varying the speed, and verified that the bouncing ball moves accordingly without glitches or unexpected behavior.
