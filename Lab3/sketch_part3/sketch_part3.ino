@@ -49,8 +49,6 @@ void loop() {
   // Update ball based on speed location
 
   int ballVelocity = (encoder0Pos - 128) / 10;
-  Serial.println(encoder0Pos);
-  Serial.println(ballVelocity);
   
   _xBall += _xDir * ballVelocity;
   _yBall += _yDir * ballVelocity;
@@ -77,10 +75,12 @@ void loop() {
 
 void tryIncrementEncoder() {
   encoder0Pos = min(MAX_VAL, encoder0Pos + 1);
+  Serial.println(encoder0Pos);
 }
 
 void tryDecrementEncoder() {
   encoder0Pos = max(MIN_VAL, encoder0Pos - 1);
+  Serial.println(encoder0Pos);
 }
 
 void encoderAInterrupt(){
@@ -92,7 +92,6 @@ void encoderAInterrupt(){
 }
 
 void encoderBInterrupt(){
-  
   unsigned long interrupt_time = millis();
   if (interrupt_time - last_interrupt_time > ENCODER_DELAY_FILTER) {
    doEncoderB();
@@ -102,42 +101,10 @@ void encoderBInterrupt(){
 
 
 void doEncoderA(){ 
-  if (digitalRead(encoder0PinA) == HIGH) {   // look for a low-to-high on channel A
-    if (digitalRead(encoder0PinB) == LOW) {  // check channel B to see which way encoder is turning
-      tryIncrementEncoder();         // CW
-    } 
-    else {
-      tryDecrementEncoder();         // CCW
-    }
-  }
-  else                                       // must be a high-to-low edge on channel A                                       
-  { 
-    if (digitalRead(encoder0PinB) == HIGH) { // check channel B to see which way encoder is turning  
-      tryIncrementEncoder();         // CW
-    } 
-    else {
-      tryDecrementEncoder();         // CCW
-    }
-  }
-  Serial.println (encoder0Pos, DEC);         // use for debugging - remember to comment out
+  tryIncrementEncoder();
 } 
 
 void doEncoderB(){
-  if (digitalRead(encoder0PinB) == HIGH) {   // look for a low-to-high on channel B
-    if (digitalRead(encoder0PinA) == HIGH) { // check channel A to see which way encoder is turning
-      tryIncrementEncoder();         // CW
-    } 
-    else {
-      tryDecrementEncoder();         // CCW
-    }
-  }
-  else {                                      // Look for a high-to-low on channel B
-    if (digitalRead(encoder0PinA) == LOW) {   // check channel B to see which way encoder is turning  
-      tryIncrementEncoder();          // CW
-    } 
-    else {
-      tryDecrementEncoder();          // CCW
-    }
-  }
-  Serial.println (encoder0Pos, DEC);         // use for debugging - remember to comment out
+  tryDecrementEncoder();
+  //Serial.println (encoder0Pos, DEC);         // use for debugging - remember to comment out
 }
