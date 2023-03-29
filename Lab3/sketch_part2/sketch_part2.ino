@@ -21,13 +21,13 @@ void loop() {
   digitalWrite(trigPin, LOW);
   duration = pulseIn(echoPin, HIGH);
   distance = duration / 58.2;
-  int mappedDistance = map(distance, 0, 16, 0, 255);
+  int mappedDistance = map(distance, 0, 10, 0, 255);
   Serial.print("Distance is: ");
   Serial.println(distance);
   
   // Read from Photocell:
   int photocellValue = analogRead(photocellPin);
-  int mappedPhotocellValue = map(photocellValue, 0, 1023, 0, 255);
+  int mappedPhotocellValue = map(photocellValue, 200, 1023, 0, 255);
   Serial.print("Mapped photocell value is: ");
   Serial.println(mappedPhotocellValue);
   Serial.print("Photocell value is: ");
@@ -49,5 +49,5 @@ void loop() {
   }
   
   Serial.println(photocellValue);
-  delay(1000);
+  delay(10);
 }

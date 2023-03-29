@@ -48,7 +48,7 @@ void loop() {
   disp.clearDisplay();
   // Update ball based on speed location
 
-  int ballVelocity = (encoder0Pos - 128) / 10;
+  int ballVelocity = (encoder0Pos - 128);
   
   _xBall += _xDir * ballVelocity;
   _yBall += _yDir * ballVelocity;
@@ -98,7 +98,6 @@ void encoderBInterrupt(){
   }
   last_interrupt_time = interrupt_time;
 }
-
 
 void doEncoderA(){ 
   tryIncrementEncoder();
