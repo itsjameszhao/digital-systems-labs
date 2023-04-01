@@ -38,7 +38,8 @@ void loop() {
   int mappedPhotocellValue = map(photocellValue, 0, 1023, 0, 255);
   Serial.println(photocellValue);
   Serial.println(mappedPhotocellValue);
-  
+
+  // Write the photocell value
   analogWrite(redPin, 0);
   analogWrite(greenPin, 0);
   analogWrite(bluePin, mappedPhotocellValue);
