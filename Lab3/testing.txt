@@ -17,7 +17,6 @@ Part 3 - SPI/I2C display
 We tested the rotary encoder code and verified that it correctly reads the state of the rotary encoder.
 We tested the bouncing ball on the OLED screen and verified that it moves around the screen according to the velocity of the rotary encoder.
 We tested the saturation feature of the rotary encoder to ensure that it works as expected.
-We tested the OLED screen using both the I2C and SPI communication protocols.
 We tested the OLED screen by drawing different shapes, lines, and texts on the screen using the Adafruit library and verified that they are displayed correctly.
 To ensure that our design is robust to unusual/unexpected inputs, we conducted the following tests:
 
