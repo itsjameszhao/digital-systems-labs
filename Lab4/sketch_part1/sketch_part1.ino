@@ -7,12 +7,15 @@ struct process_state{
   int pid;
 };
 
-#define RED_P1 3
-#define BLUE_P2 2
-#define GREEN_END 4
+#define RED_PIN 3
+#define BLUE_PIN 2
+#define GREEN_PIN 4
 
 // global variable to assign process ids
 int process_counter = 10;
+
+// parameter to control the interval
+int N = 5;
 
 // global variable indicating the head of the process list
 process_t *current_process = NULL;
@@ -65,6 +68,16 @@ void process_start(void){
 unsigned int process_select(unsigned int cursp) {
   if (logging_index < NUM_DATA && current_process != NULL) {
     logging_array[logging_index] = current_process->pid;
+    logging_index++;
+    // if (current_process->pid == 10) {
+    //   // digitalWrite(2, HIGH);
+    //   // delay(100);
+    //   // digitalWrite(2, LOW); 
+    // }  else if (current_process->pid == 11) {
+    //   // digitalWrite(3, HIGH);
+    //   // delay(100);
+    //   // digitalWrite(3, LOW); 
+    // }
   }
   if (cursp == 0){
     // process has not begun yet, begin the process and return its sp
@@ -108,12 +121,13 @@ unsigned int process_select(unsigned int cursp) {
 
 
 void p1 (void)
-{  
+{    
   /* process 1 here */
-  for(int i = 0; i < 100; i++){
-    digitalWrite(3, HIGH);
-    delay(100);
-    digitalWrite(3, LOW); 
+  for(int i = 0; i < 25; i++){
+    digitalWrite(RED_PIN, HIGH);
+    delay(100 * N);
+    digitalWrite(RED_PIN, LOW);
+    delay(200 * N); 
   }
   return;
 }
@@ -121,10 +135,25 @@ void p1 (void)
 void p2 (void)
 {
 /* process 2 here */
-  for(int i = 0; i < 100; i++) {
-    digitalWrite(2, HIGH);
-    delay(100);
-    digitalWrite(2, LOW);  
+  delay(100 * N);
+  for(int i = 0; i < 25; i++) {
+    digitalWrite(GREEN_PIN, HIGH);
+    delay(100 * N);
+    digitalWrite(GREEN_PIN, LOW);
+    delay(200 * N);  
+  }
+ return;
+}
+
+void p3 (void)
+{
+/* process 2 here */
+  delay(200 * N);
+  for(int i = 0; i < 25; i++) {
+    digitalWrite(BLUE_PIN, HIGH);
+    delay(100 * N);
+    digitalWrite(BLUE_PIN, LOW);
+    delay(200 * N);  
   }
  return;
 }
@@ -146,6 +175,10 @@ void setup()
   }
 
   if (process_create (p2, 64) < 0) {
+    return;
+  }
+
+  if (process_create (p3, 64) < 0) {
     return;
   }
 
