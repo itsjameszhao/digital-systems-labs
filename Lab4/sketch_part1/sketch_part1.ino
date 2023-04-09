@@ -4,12 +4,15 @@ struct process_state{
   unsigned int sp;
   struct process_state *next;
   int started;
+  int pid;
 };
 
 #define RED_P1 3
 #define BLUE_P2 2
 #define GREEN_END 4
 
+// global variable to assign process ids
+int process_counter = 10;
 
 // global variable indicating the head of the process list
 process_t *current_process = NULL;
@@ -19,6 +22,9 @@ process_t *temp_current_process = NULL;
 
 // global variable indicating the tail of the process list
 process_t *last_process;
+const int NUM_DATA = 50;
+int logging_array[NUM_DATA]; // value of the current process
+int logging_index; //
 
 // insert a new process struct at the end of the process list, or if there isn't anything just make it the head
 void insert_at_tail(process_t *ps) {
@@ -43,6 +49,8 @@ int process_create(void (*f) (void), int n) {
   ps->sp = sp;
   ps->next = NULL;
   ps->started = 0; // not started
+  ps->pid = process_counter;
+  process_counter++;
   insert_at_tail(ps);  
   interrupts();
   return 0;
@@ -55,10 +63,9 @@ void process_start(void){
 }
 
 unsigned int process_select(unsigned int cursp) {
-  if (temp_current_process == NULL) {
-    return 0;
+  if (logging_index < NUM_DATA && current_process != NULL) {
+    logging_array[logging_index] = current_process->pid;
   }
-  // case if the process hasn't begun or terminated
   if (cursp == 0){
     // process has not begun yet, begin the process and return its sp
     if (temp_current_process->started == 0){
@@ -129,6 +136,11 @@ void setup()
   pinMode(2, OUTPUT);
   pinMode(3, OUTPUT);
 
+  logging_index = 0;
+  for (int i = 0; i < NUM_DATA; i++) {
+    logging_array[i] = 0;
+  }
+
   if (process_create (p1, 64) < 0) {
     return;
   }
@@ -145,6 +157,23 @@ void loop()
   /* if you get here, then all processes are either finished or
      there is deadlock */
   Serial.println("FINISHED");
-  digitalWrite(4, HIGH);  
-  while (1) ;
+  digitalWrite(4, HIGH); 
+  // noInterrupts();
+  Serial.println(logging_array[0]);
+  Serial.println(logging_array[1]);
+  Serial.println(logging_array[2]);
+  Serial.println(logging_array[3]);
+  Serial.println(logging_array[4]);
+  Serial.println(logging_array[5]);
+  Serial.println(logging_array[6]);
+  Serial.println(logging_array[7]);
+  Serial.println(logging_array[8]);
+  Serial.println(logging_array[9]);
+
+
+  // interrupts();
+  while (1) {
+    noInterrupts();
+    Serial.println("IN WHILE LOOP");
+  }
 }
