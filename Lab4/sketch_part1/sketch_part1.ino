@@ -36,7 +36,7 @@ void insert_at_tail(process_t *ps) {
 int process_create(void (*f) (void), int n) {
   noInterrupts();
   unsigned int sp = process_init(f, n);
-  process_t *ps = malloc(sizeof(process_t));
+  process_t *ps = process_malloc(sizeof(process_t));
   if (sp == 0 || ps == 0) {
     return -1;
   }
@@ -54,26 +54,30 @@ void process_start(void){
   current_process = temp_current_process;
 }
 
-unsigned int process_select(unsigned int cursp){
+unsigned int process_select(unsigned int cursp) {
   if (temp_current_process == NULL) {
     return 0;
   }
-  // case 1: cursp == 0
+  // case if the process hasn't begun or terminated
   if (cursp == 0){
+    // process has not begun yet, begin the process and return its sp
     if (temp_current_process->started == 0){
       temp_current_process->started = 1;
       current_process = temp_current_process;
       return temp_current_process->sp;     
     }
+    // process has ended, free the data structure and return next sp if one exists
     else {
       process_t *current_head = temp_current_process;
       temp_current_process = temp_current_process->next;
       free(current_head);
+      // case if next is not null
       if(temp_current_process != NULL){
         temp_current_process->started = 1;
         current_process = temp_current_process;
         return temp_current_process-> sp;
       }
+      // case if next is null
       else {
         temp_current_process = NULL;
         last_process = NULL;      
@@ -82,9 +86,10 @@ unsigned int process_select(unsigned int cursp){
       }
     }
   }
-  // case 2: nonzero
+  // case 2: nonzero sp means 
   else {
     process_t* temp_head = temp_current_process;
+    temp_head->sp = cursp;
     temp_current_process = temp_current_process->next;
     temp_head->next = NULL;
     insert_at_tail(temp_head);
@@ -96,13 +101,12 @@ unsigned int process_select(unsigned int cursp){
 
 
 void p1 (void)
-{
-
-  delay(1000);  
+{  
   /* process 1 here */
   for(int i = 0; i < 100; i++){
     digitalWrite(3, HIGH);
-    digitalWrite(2, LOW); 
+    delay(100);
+    digitalWrite(3, LOW); 
   }
   return;
 }
@@ -112,7 +116,8 @@ void p2 (void)
 /* process 2 here */
   for(int i = 0; i < 100; i++) {
     digitalWrite(2, HIGH);
-    digitalWrite(3, LOW);  
+    delay(100);
+    digitalWrite(2, LOW);  
   }
  return;
 }
@@ -125,17 +130,9 @@ void setup()
   pinMode(3, OUTPUT);
 
   if (process_create (p1, 64) < 0) {
-
     return;
   }
 
-delay(1000);
-
-
-  digitalWrite(4, HIGH);  
-  delay(200);
-  digitalWrite(4, LOW);
-  delay(200);
   if (process_create (p2, 64) < 0) {
     return;
   }
@@ -148,7 +145,6 @@ void loop()
   /* if you get here, then all processes are either finished or
      there is deadlock */
   Serial.println("FINISHED");
-  //digitalWrite(2, LOW);
-  //digitalWrite(3, LOW);
+  digitalWrite(4, HIGH);  
   while (1) ;
 }
