@@ -1,4 +1,10 @@
 #include "concurrency.h"
+#define OLED_CS 8
+#define OLED_DC 4 
+#define OLED_RST 5
+#define OLED_SI 6
+#define OLED_CLK 7
+#include <Adafruit_SSD1306.h>
 
 struct process_state{
   unsigned int sp;
@@ -9,7 +15,7 @@ struct process_state{
 
 #define RED_PIN 3
 #define BLUE_PIN 2
-#define GREEN_PIN 4
+#define GREEN_PIN 1
 
 // global variable to assign process ids
 int process_counter = 10;
