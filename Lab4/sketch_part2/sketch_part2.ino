@@ -19,19 +19,27 @@ struct process_state{
 
 // OLED setup
 Adafruit_SSD1306 disp(128,64,OLED_SI,OLED_CLK,OLED_DC,OLED_RST,OLED_CS);
-int WIDTH;
-int HEIGHT;
+int WIDTH = disp.width();
+int HEIGHT = disp.height();
 
 // Ball variables
 const int ballRadius = 4;
 // Position of ball
-int xBall = 0;
-int yBall = 0;
+int xBall_1 = WIDTH / 2;
+int yBall_1 = HEIGHT / 2;
 // Direction of ball
-int xDir = 1;
-int yDir = 1;
+int xDir_1 = 1;
+int yDir_1 = 1;
+// Position of ball
+int xBall_2 = WIDTH / 2;
+int yBall_2 = HEIGHT / 2;
+// Direction of ball
+int xDir_2 = -1;
+int yDir_2 = -1;
+int ballVelocity = 4;
+
 const int DELAY_LOOP_MS = 5;
-int MAX_VELOCITY = 8;
+
 
 // global variable to assign process ids
 int process_counter = 10;
@@ -51,6 +59,13 @@ const int NUM_DATA = 50;
 int logging_array[NUM_DATA]; // value of the current process
 int logging_index; //
 
+void delay_millis(int duration) {
+  int end_time = millis() + duration;
+  while(millis() < end_time) {
+    ;
+  }
+}
+
 lock_t *l; // The global lock
 
 struct lock_state {
@@ -62,23 +77,20 @@ void lock_init(lock_t *l) {
 }
 
 void lock_acquire(lock_t *l){ 
-  while(1){
-    noInterrupts();
-    cur_pid(HIGH);
-    if (l->held == 0) {
-      l->held = 1;
-      cur_pid(LOW);
-      break;
-    }
+  noInterrupts();
+  while(l->held != 0) {
     interrupts();
-    yield();
-  }  
-  interrupts();
+    noInterrupts();
+  }
+  l->held = 1;
+  cur_pid(HIGH);
+  interrupts();  
 }
 
 void lock_release(lock_t *l) {
   noInterrupts();
   l->held = 0;
+  cur_pid(LOW);
   interrupts();  
 }
 
@@ -182,21 +194,16 @@ unsigned int process_select(unsigned int cursp) {
     return temp_current_process->sp;     
   }
 }
+void display_string(char* ch) {
 
-void display_string(char* ch, int counter) {
   disp.clearDisplay();
 
   disp.setTextSize(1);
   disp.setTextColor(WHITE, BLACK);
-  disp.setCursor(0, 0);  
+  disp.setCursor(0, 0);
   disp.println(ch);
-  disp.print("Counter: ");
-  char c[] = "0";
-  c[0] += counter;
-  disp.println(c);
   disp.display();
-  delay(1000);
-  disp.clearDisplay();
+  delay_millis(500);
 }
 
 
@@ -204,9 +211,9 @@ void p1 (void)
 {    
   for (int i = 0; i < 10; i++) {
     lock_acquire(l);
-    display_string("1", i);
+    display_string("1");
     lock_release(l);
-    delay(10);
+    delay_millis(3);
   }
 }
 
@@ -214,9 +221,69 @@ void p2 (void)
 {
   for (int i = 0; i < 10; i++) {
     lock_acquire(l);
-    display_string("2", i);
+    display_string("2");
     lock_release(l);
-    delay(15);
+    delay_millis(3);
+  }
+}
+
+void p3 (void)
+{    
+  while (1) {
+    lock_acquire(l);
+    disp.clearDisplay();
+    // Using velocity and directions, update position of ball
+    xBall_1 += xDir_1 * ballVelocity;
+    yBall_1 += yDir_1 * ballVelocity;
+
+    // Check for ball bounce: xBall and yBall represent the center coordinates of the ball
+    // check that center +/- radius does not come into contact with boundary, if it does, reverse directions (xDir & yDir),
+    // not encoder0Pos
+    if(xBall_1 - ballRadius <= 0 || xBall_1 + ballRadius >= WIDTH){
+      xDir_1 = xDir_1 * -1;
+    } 
+    if(yBall_1 - ballRadius <= 0 || yBall_1 + ballRadius >= HEIGHT){
+      yDir_1 = yDir_1 * -1;
+    }
+
+    // Draw circle
+    disp.drawCircle(xBall_1, yBall_1, ballRadius, SSD1306_WHITE);
+    
+    // Render buffer to screen
+    disp.display();
+    delay_millis(5);
+    lock_release(l);
+    delay_millis(5);
+  }
+}
+
+void p4 (void)
+{
+  while (1) {
+    lock_acquire(l);
+    disp.clearDisplay();
+    // Using velocity and directions, update position of ball
+    xBall_2 += xDir_2 * ballVelocity;
+    yBall_2 += yDir_2 * ballVelocity;
+
+    // Check for ball bounce: xBall and yBall represent the center coordinates of the ball
+    // check that center +/- radius does not come into contact with boundary, if it does, reverse directions (xDir & yDir),
+    // not encoder0Pos
+    if(xBall_2 - ballRadius <= 0 || xBall_2 + ballRadius >= WIDTH){
+      xDir_2 = xDir_2 * -1;
+    } 
+    if(yBall_2 - ballRadius <= 0 || yBall_2 + ballRadius >= HEIGHT){
+      yDir_2 = yDir_2 * -1;
+    }
+
+    // Draw circle
+    disp.drawCircle(xBall_2, yBall_2, ballRadius, SSD1306_WHITE);
+    
+    // Render buffer to screen
+    disp.display();
+    delay_millis(5);
+    lock_release(l);
+    delay_millis(10);
   }
 }
 
@@ -242,7 +309,7 @@ void setup()
   l = malloc(sizeof(lock_t));
   lock_init(l);
 
-  display_string("Starting setup", 0);
+  display_string("Starting setup");
   delay(2000);
   if (process_create (p1, 64) < 0) {
     digitalWrite(RED_PIN, HIGH);
@@ -253,6 +320,15 @@ void setup()
     digitalWrite(RED_PIN, HIGH);
     return;
   }
+  if (process_create (p3, 64) < 0) {
+    digitalWrite(RED_PIN, HIGH);
+    return;
+  }
+
+  if (process_create (p4, 64) < 0) {
+    digitalWrite(RED_PIN, HIGH);
+    return;
+  }
 }
 
 void loop()
@@ -260,7 +336,7 @@ void loop()
   process_start();
   /* if you get here, then all processes are either finished or
      there is deadlock */
-  display_string("Finished", 0);
+  display_string("Finished");
 
   // interrupts();
   while (1) {
