@@ -10,7 +10,7 @@ struct process_state{
 
 #define RED_PIN 3
 #define BLUE_PIN 2
-#define GREEN_PIN 1
+#define GREEN_PIN 12
 #define OLED_CS 8
 #define OLED_DC 4 
 #define OLED_RST 5
@@ -61,14 +61,17 @@ void lock_init(lock_t *l) {
     l->held = 0;
 }
 
-void lock_acquire(lock_t *l){
+void lock_acquire(lock_t *l){ 
   while(1){
     noInterrupts();
+    cur_pid(HIGH);
     if (l->held == 0) {
       l->held = 1;
+      cur_pid(LOW);
       break;
     }
     interrupts();
+    yield();
   }  
   interrupts();
 }
@@ -77,6 +80,15 @@ void lock_release(lock_t *l) {
   noInterrupts();
   l->held = 0;
   interrupts();  
+}
+
+void cur_pid(int high_low){
+  if (current_process->pid == 10) {
+    digitalWrite(BLUE_PIN, high_low);
+  }
+  else if (current_process->pid == 11) {
+    digitalWrite(GREEN_PIN, high_low);
+  }
 }
 
 // insert a new process struct at the end of the process list, or if there isn't anything just make it the head
@@ -94,6 +106,7 @@ void insert_at_tail(process_t *ps) {
 
 int process_create(void (*f) (void), int n) {
   noInterrupts();
+  //display_string("Creating process");
   unsigned int sp = process_init(f, n);
   process_t *ps = process_malloc(sizeof(process_t));
   if (sp == 0 || ps == 0) {
@@ -103,6 +116,7 @@ int process_create(void (*f) (void), int n) {
   ps->next = NULL;
   ps->started = 0; // not started
   ps->pid = process_counter;
+  //display_string("Created process");  
   process_counter++;
   insert_at_tail(ps);  
   interrupts();
@@ -169,16 +183,19 @@ unsigned int process_select(unsigned int cursp) {
   }
 }
 
-void display_string(char* ch) {
+void display_string(char* ch, int counter) {
   disp.clearDisplay();
 
   disp.setTextSize(1);
   disp.setTextColor(WHITE, BLACK);
-  disp.setCursor(0, 0);
-  disp.print("Running process ");
+  disp.setCursor(0, 0);  
   disp.println(ch);
+  disp.print("Counter: ");
+  char c[] = "0";
+  c[0] += counter;
+  disp.println(c);
   disp.display();
-  delay(500);
+  delay(1000);
   disp.clearDisplay();
 }
 
@@ -187,8 +204,9 @@ void p1 (void)
 {    
   for (int i = 0; i < 10; i++) {
     lock_acquire(l);
-    display_string("1");
+    display_string("1", i);
     lock_release(l);
+    delay(10);
   }
 }
 
@@ -196,8 +214,9 @@ void p2 (void)
 {
   for (int i = 0; i < 10; i++) {
     lock_acquire(l);
-    display_string("2");
+    display_string("2", i);
     lock_release(l);
+    delay(15);
   }
 }
 
@@ -207,6 +226,11 @@ void setup()
   Serial.println("SETUP");  
   pinMode(2, OUTPUT);
   pinMode(3, OUTPUT);
+  pinMode(12, OUTPUT);
+
+  digitalWrite(RED_PIN, LOW);
+  digitalWrite(BLUE_PIN, LOW);
+  digitalWrite(GREEN_PIN, LOW);
 
   // For OLED
   disp.begin(SSD1306_SWITCHCAPVCC);
@@ -216,17 +240,19 @@ void setup()
   HEIGHT = disp.height();
 
   l = malloc(sizeof(lock_t));
+  lock_init(l);
 
-  display_string("Starting process 1");
+  display_string("Starting setup", 0);
   delay(2000);
-  if (process_create (p1, 128) < 0) {
+  if (process_create (p1, 64) < 0) {
+    digitalWrite(RED_PIN, HIGH);
     return;
   }
 
-  if (process_create (p2, 128) < 0) {
+  if (process_create (p2, 64) < 0) {
+    digitalWrite(RED_PIN, HIGH);
     return;
   }
-
 }
 
 void loop()
@@ -234,7 +260,7 @@ void loop()
   process_start();
   /* if you get here, then all processes are either finished or
      there is deadlock */
-  display_string("Finished");
+  display_string("Finished", 0);
 
   // interrupts();
   while (1) {
