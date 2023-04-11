@@ -1,13 +1,6 @@
 #include "concurrency.h"
 #include <Adafruit_SSD1306.h>
 
-struct process_state{
-  unsigned int sp;
-  struct process_state *next;
-  int started;
-  int pid;
-};
-
 #define RED_PIN 3
 #define BLUE_PIN 2
 #define GREEN_PIN 12
@@ -16,6 +9,46 @@ struct process_state{
 #define OLED_RST 5
 #define OLED_SI 6
 #define OLED_CLK 7
+
+/*
+    In this sketch, we import the concurrency code from part 1. We also implement mutual exclusion locks.
+    The general strategy for our locks is as follows: a lock has one field, held, that indicates whether
+    someone holds the lock or not. In order to read the value of this field, a process must disable interrupts
+    in order to ensure they are the only process reading this value. If they see the lock is held, they activate interrupts
+    and yield their turn. They keep doing this until they acquire the lock, i.e., trying to acquire a lock blocks
+    execution. If a process sees the lock is not held, they set the field, and reenable interrupts, and continue execution.
+
+    We provide two tests for this. Both of our tests are based on the OLED display, since access to this must be exclusive
+    to correctly display. The first test is a basic display of the process that currently holds the lock. If they hold the lock,
+    they will display their `pid`. In these tests, p1 and p2, after a process calls lock_release, we make the processes sleep to
+    provide some sense of fairness (otherwise, the same process will usually reaquire the lock immediately, there is nothing
+    wrong with this, but its visually more pleasing to see processes alternate). We can add some fairness to locks
+    by adding a queue structure to the lock, such that on attempting to acquire, a process can add themselves to the queue,
+    and the `owner` of the lock can be stored as a field on the lock. However, this was not a requirement of our lock
+    per the specifications of the lab. When this sketch is ran with only p1 and p2, the OLED will alternate showing 
+    the numbers 1 and 2, 10 times each, until the program terminates.
+
+    In the second test, we import and modify our code from lab3. To run this test, only p3 and p4 should be created and ran.
+    In this test, each process will draw a ball on the OLED display, and control its motion to make it appear that 
+    there are two balls bouncing around the screen. The way our code is written, one ball will move about twice as fast as the
+    other, because we make one process sleep for twice as long as the other. It is also possible to have them move at the
+    same speed, however, we preferred our current version because we saw it as a good demonstration of the differences in
+    processing speeds of different process. Although both processes here run at the same speed, it can serve as a useful
+    demonstration.
+
+    One final note on our implementation, on acquiring and releasing a lock, we call a function cur_pid, that simply
+    indicates which process currently holds the lock. This was useful for debugging and visualizing the runtime processing
+    of our sketch. Our locks still work without this, so it is entirely optional.
+*/
+
+
+struct process_state{
+  unsigned int sp;
+  struct process_state *next;
+  int started;
+  int pid;
+};
+
 
 // OLED setup
 Adafruit_SSD1306 disp(128,64,OLED_SI,OLED_CLK,OLED_DC,OLED_RST,OLED_CS);
@@ -59,6 +92,8 @@ const int NUM_DATA = 50;
 int logging_array[NUM_DATA]; // value of the current process
 int logging_index; //
 
+
+// our own delay function
 void delay_millis(int duration) {
   int end_time = millis() + duration;
   while(millis() < end_time) {
@@ -118,7 +153,6 @@ void insert_at_tail(process_t *ps) {
 
 int process_create(void (*f) (void), int n) {
   noInterrupts();
-  //display_string("Creating process");
   unsigned int sp = process_init(f, n);
   process_t *ps = process_malloc(sizeof(process_t));
   if (sp == 0 || ps == 0) {
@@ -128,7 +162,6 @@ int process_create(void (*f) (void), int n) {
   ps->next = NULL;
   ps->started = 0; // not started
   ps->pid = process_counter;
-  //display_string("Created process");  
   process_counter++;
   insert_at_tail(ps);  
   interrupts();
@@ -142,19 +175,12 @@ void process_start(void){
 }
 
 unsigned int process_select(unsigned int cursp) {
+  // this if statement below was used only for debugging
   if (logging_index < NUM_DATA && current_process != NULL) {
     logging_array[logging_index] = current_process->pid;
     logging_index++;
-    // if (current_process->pid == 10) {
-    //   // digitalWrite(2, HIGH);
-    //   // delay(100);
-    //   // digitalWrite(2, LOW); 
-    // }  else if (current_process->pid == 11) {
-    //   // digitalWrite(3, HIGH);
-    //   // delay(100);
-    //   // digitalWrite(3, LOW); 
-    // }
   }
+
   if (cursp == 0){
     // process has not begun yet, begin the process and return its sp
     if (temp_current_process->started == 0){
@@ -194,10 +220,12 @@ unsigned int process_select(unsigned int cursp) {
     return temp_current_process->sp;     
   }
 }
+
+// function that will display a provided string onto
+// the OLED display for at least 500ms
 void display_string(char* ch) {
 
   disp.clearDisplay();
-
   disp.setTextSize(1);
   disp.setTextColor(WHITE, BLACK);
   disp.setCursor(0, 0);
@@ -207,6 +235,8 @@ void display_string(char* ch) {
 }
 
 
+// meant to be paired with p2
+// attempts to write its `pid` onto OLED
 void p1 (void)
 {    
   for (int i = 0; i < 10; i++) {
@@ -217,6 +247,8 @@ void p1 (void)
   }
 }
 
+// meant to be paired with p1
+// attempts to write its `pid` onto OLED
 void p2 (void)
 {
   for (int i = 0; i < 10; i++) {
@@ -227,6 +259,9 @@ void p2 (void)
   }
 }
 
+// meant to be paired with p4
+// attempts to draw its own ball onto the screen, this is the `faster` process,
+// only sleeps for 5ms after releasing the lock
 void p3 (void)
 {    
   while (1) {
@@ -257,6 +292,9 @@ void p3 (void)
   }
 }
 
+// meant to be paired with p3
+// attempts to draw its own ball onto the OLED, this is the `slower` process,
+// sleeps for 10ms after releasing the lock
 void p4 (void)
 {
   while (1) {
@@ -311,15 +349,15 @@ void setup()
 
   display_string("Starting setup");
   delay(2000);
-  if (process_create (p1, 64) < 0) {
-    digitalWrite(RED_PIN, HIGH);
-    return;
-  }
-
-  if (process_create (p2, 64) < 0) {
-    digitalWrite(RED_PIN, HIGH);
-    return;
-  }
+//  if (process_create (p1, 64) < 0) {
+//    digitalWrite(RED_PIN, HIGH);
+//    return;
+//  }
+//
+//  if (process_create (p2, 64) < 0) {
+//    digitalWrite(RED_PIN, HIGH);
+//    return;
+//  }
   if (process_create (p3, 64) < 0) {
     digitalWrite(RED_PIN, HIGH);
     return;
