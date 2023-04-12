@@ -1,10 +1,4 @@
 #include "concurrency.h"
-#define OLED_CS 8
-#define OLED_DC 4 
-#define OLED_RST 5
-#define OLED_SI 6
-#define OLED_CLK 7
-#include <Adafruit_SSD1306.h>
 
 struct process_state{
   unsigned int sp;
@@ -16,6 +10,40 @@ struct process_state{
 #define RED_PIN 3
 #define BLUE_PIN 2
 #define GREEN_PIN 1
+
+
+/*
+    In this sketch, we implement a basic model for concurrency. There are three global variables essential to make this happen.
+    current_process, temp_current_process, and last_process. Since we use a linked list to represent our available processes,
+    these global variables exist to help us ensure that we can always access the state of our linked list. 
+
+    process_state: a structure to represent the state necessary for a process in our concurrency model. `sp` stores a given
+    process's most recent stack pointer, `started` indicates whether a process has kicked off its execution or not (useful
+    to determine if a process has terminated or not), `next` is a pointer to the next process in our queue
+
+    process_create: in this function, we make two important function calls, process_init and process_malloc. The former
+    is used to create the appropriate stack memory for the function that processes will call, and the latter is used to initialize
+    the memory associated with a process's state. After allocating this memory, we add the process_state struct onto our linked list
+
+    process_select: used to select the next process to execute. There are two main inputs to handle, zero and non-zero.
+    With a zero input, a process has either terminated, or nothing is running. To differentiate between these two cases,
+    we do some extra checking with the `started` flag in our process_state struct. We also handle special cases here such as
+    no other process available for execution. We always update the value of current_process at the end of this function call.
+
+    process_start: calls process_begin, which will indirectly call process_select, which handles all necessary cases
+
+    TESTING: Our test uses an RGB LED and 3 processes. Each process controls a separate digital pin on the Arduino, so 
+    no competition occurs (i.e. no mutual exclusion is needed). Each process will turn on their LED for 100ms * N, and turn it off
+    for 200ms * N, making it seem that these lights alternate. However, since each LED is controlled by a single process, they
+    are all independent of one another. These intervals can safely be changed to variable lengths for varying visual output.
+
+    Another possible test would be to use the 5x7 led matrix, but functionally it would behave similarly to our current
+    test: each process controls a set of pins, and they write to them at variable times.
+
+    More complex tests implemented in part 2, but here it is safe to run any combination of these processes, all 3, only 2, or
+    just 1, our model for concurrency allows all these as valid executions. More processes can also be built on top of 
+    the current ones, as long as no resources are shared.
+*/
 
 // global variable to assign process ids
 int process_counter = 10;
@@ -72,19 +100,12 @@ void process_start(void){
 }
 
 unsigned int process_select(unsigned int cursp) {
+  // if statement below only for debugging
   if (logging_index < NUM_DATA && current_process != NULL) {
     logging_array[logging_index] = current_process->pid;
     logging_index++;
-    // if (current_process->pid == 10) {
-    //   // digitalWrite(2, HIGH);
-    //   // delay(100);
-    //   // digitalWrite(2, LOW); 
-    // }  else if (current_process->pid == 11) {
-    //   // digitalWrite(3, HIGH);
-    //   // delay(100);
-    //   // digitalWrite(3, LOW); 
-    // }
   }
+
   if (cursp == 0){
     // process has not begun yet, begin the process and return its sp
     if (temp_current_process->started == 0){
@@ -197,22 +218,8 @@ void loop()
      there is deadlock */
   Serial.println("FINISHED");
   digitalWrite(4, HIGH); 
-  // noInterrupts();
-  Serial.println(logging_array[0]);
-  Serial.println(logging_array[1]);
-  Serial.println(logging_array[2]);
-  Serial.println(logging_array[3]);
-  Serial.println(logging_array[4]);
-  Serial.println(logging_array[5]);
-  Serial.println(logging_array[6]);
-  Serial.println(logging_array[7]);
-  Serial.println(logging_array[8]);
-  Serial.println(logging_array[9]);
 
-
-  // interrupts();
   while (1) {
-    noInterrupts();
     Serial.println("IN WHILE LOOP");
   }
 }
