@@ -103,14 +103,29 @@ void delay_millis(int duration) {
 
 lock_t *l; // The global lock
 
+// for a basic lock, we only need a held flag
+// for some level of fairness, we can introduce pids and queues
+//
+// as a basic lock, it does not provide any fairness guarantees, as this was not a requirement
+// for this assignment
 struct lock_state {
   int held;  
 };
 
+// initializes lock as free
 void lock_init(lock_t *l) {
     l->held = 0;
 }
 
+// attempts to read into lock->held, only one process can read at a time
+// as accessing this memory address is done with interrupts disabled
+// 
+// if the lock is free, set it as held, and indicate you hold it with the LED
+// (writing to the LED is entirely optional, but great visualization tool)
+// 
+// yield can be added after a failed read, but due to lack of understanding if yield should be called
+// with interrupts enabled or disabled, we allowed the regular context switching
+// mechanism to handle this
 void lock_acquire(lock_t *l){ 
   noInterrupts();
   while(l->held != 0) {
@@ -122,6 +137,7 @@ void lock_acquire(lock_t *l){
   interrupts();  
 }
 
+// disables interrupts to set the lock as free, and turns off the LED
 void lock_release(lock_t *l) {
   noInterrupts();
   l->held = 0;
@@ -129,6 +145,11 @@ void lock_release(lock_t *l) {
   interrupts();  
 }
 
+// visualization tool for seeing which process holds a lock
+// as written can only support two processes, but additional processes
+// will not break, they just won't write to an LED
+// 
+// can easily be extended to more processes
 void cur_pid(int high_low){
   if (current_process->pid == 10) {
     digitalWrite(BLUE_PIN, high_low);
@@ -179,6 +200,11 @@ unsigned int process_select(unsigned int cursp) {
   if (logging_index < NUM_DATA && current_process != NULL) {
     logging_array[logging_index] = current_process->pid;
     logging_index++;
+  }
+   
+  // safety check
+  if(temp_current_process == NULL){
+    return 0;
   }
 
   if (cursp == 0){
@@ -325,6 +351,11 @@ void p4 (void)
   }
 }
 
+
+// for best results, we recommend pairing process p1 with p2, and p3 with p4, but there is nothing
+// inherently wrong with mixing and matching these
+//
+// all processes could also be ran simultaneously, but this would not be visually appealing
 void setup()
 {
   Serial.begin(9600);
@@ -377,6 +408,5 @@ void loop()
   display_string("Finished");
 
   // interrupts();
-  while (1) {
-  }
+  while (1);
 }

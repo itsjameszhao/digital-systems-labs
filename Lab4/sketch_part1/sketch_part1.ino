@@ -64,6 +64,7 @@ int logging_array[NUM_DATA]; // value of the current process
 int logging_index; //
 
 // insert a new process struct at the end of the process list, or if there isn't anything just make it the head
+// only works with temp_current_process, should not update current_process
 void insert_at_tail(process_t *ps) {
   if (temp_current_process == NULL) {
     temp_current_process = ps;
@@ -76,6 +77,8 @@ void insert_at_tail(process_t *ps) {
   }
 }
 
+// allocates memory, pushes struct onto our linked list
+// disable interrupts through entire call for safety
 int process_create(void (*f) (void), int n) {
   noInterrupts();
   unsigned int sp = process_init(f, n);
@@ -93,12 +96,13 @@ int process_create(void (*f) (void), int n) {
   return 0;
 }
 
-
 void process_start(void){
   process_begin();
   current_process = temp_current_process;
 }
 
+// handles contexts switches, and handles all cases
+// first process, process ended, no more processes, processes queued
 unsigned int process_select(unsigned int cursp) {
   // if statement below only for debugging
   if (logging_index < NUM_DATA && current_process != NULL) {
@@ -106,6 +110,12 @@ unsigned int process_select(unsigned int cursp) {
     logging_index++;
   }
 
+  // safety check: if nothing in queue, nothing to run
+  if(temp_current_process == NULL){
+    return 0;
+  }
+
+  // process has either terminated, or hasn't started
   if (cursp == 0){
     // process has not begun yet, begin the process and return its sp
     if (temp_current_process->started == 0){
@@ -133,7 +143,7 @@ unsigned int process_select(unsigned int cursp) {
       }
     }
   }
-  // case 2: nonzero sp means 
+  // case 2: nonzero sp means current process hasn't terminated, switch to next in queue (could be itself)
   else {
     process_t* temp_head = temp_current_process;
     temp_head->sp = cursp;
@@ -147,6 +157,7 @@ unsigned int process_select(unsigned int cursp) {
 }
 
 
+// functions below turn on/off their LEDs at set intervals, intervals can safely be changed
 void p1 (void)
 {    
   /* process 1 here */
