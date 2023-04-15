@@ -9,7 +9,9 @@
 #define INTER 3
 #define WORD 7
 
-#define TIME_ADS 1000000 // Time for one bit to be transmitted, in microseconds
+
+#define TIME_ADSNS 16000 // Time for one bit to be transmitted, in microseconds
+#define TIME_ADSMS 10
 
 #define TIME 100
 
@@ -87,39 +89,44 @@ void send_morse(const char* word){
 }
 
 void send_one() {
+  //Serial.println("Sending One");
   digitalWrite(TPIN, HIGH);
-  delayMicroseconds(TIME_ADS / 2);
+  delay(TIME_ADSMS / 2);
   digitalWrite(TPIN, LOW);
-  delayMicroseconds(TIME_ADS / 2);
+  delay(TIME_ADSMS / 2);
 }
 
 void send_zero(){
+  //Serial.println("Sending Zero");
   digitalWrite(TPIN, LOW);
-  delayMicroseconds(TIME_ADS / 2);
+  delay(TIME_ADSMS / 2);
   digitalWrite(TPIN, HIGH);
-  delayMicroseconds(TIME_ADS / 2);
+  delay(TIME_ADSMS / 2);
   digitalWrite(TPIN, LOW);
 }
 
 void send_nothing() {
   digitalWrite(TPIN, LOW);
-  delayMicroseconds(TIME_ADS);
+  delay(TIME_ADSMS);
   digitalWrite(TPIN, LOW);
 }
 
 void send_ads_header(){
+  //Serial.println("Sending Header");
   send_one();
   send_one();
-  send_nothing();
   send_nothing();
   send_zero();
   send_zero();
   send_nothing();
-  send_nothing();  
+  send_nothing(); 
+  send_nothing();
+  //Serial.println("Header Finished"); 
 }
 
 void send_ads_char(const char c){
-  Serial.println("Sending character");  
+  //Serial.println("Sending character");  
+  //Serial.println(c);
   send_ads_header();
   for(int i = 0; i < 8; i++){
     int bit = (c >> i) & 1;
@@ -135,6 +142,7 @@ void send_ads_char(const char c){
 
 void send_ads(const char *message) {
   Serial.println("Sending message");
+  //Serial.println(message);
   for(char *p = message; *p != 0; p++){
     send_ads_char(*p);    
   }
@@ -142,7 +150,7 @@ void send_ads(const char *message) {
 
 void loop() {
   // put your main code here, to run repeatedly:
-  send_ads("hello");
+  send_ads("hello world!");
   // int randSleep = random(5, 500);
   // digitalWrite(TPIN, LOW);
   // delay(randSleep);
