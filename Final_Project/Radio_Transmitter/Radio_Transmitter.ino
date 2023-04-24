@@ -15,79 +15,17 @@
 
 #define TIME 100
 
-#define SHORT 250
-
-#define LONG 500
-
-#define PAUSE 100
-
-
-static const char *alpha[] = {
-    ".-",   //A
-    "-...", //B
-    "-.-.", //C
-    "-..",  //D
-    ".",    //E
-    "..-.", //F
-    "--.",  //G
-    "....", //H
-    "..",   //I
-    ".---", //J
-    "-.-",  //K
-    ".-..", //L
-    "--",   //M
-    "-.",   //N
-    "---",  //O
-    ".--.", //P
-    "--.-", //Q
-    ".-.",  //R
-    "...",  //S
-    "-",    //T
-    "..-",  //U
-    "...-", //V
-    ".--",  //W
-    "-..-", //X
-    "-.--", //Y
-    "--..", //Z
-};
-
-
 
 void setup() {
   // put your setup code here, to run once:
   pinMode(TPIN, OUTPUT);
-  //mySwitch.enableTransmit(TPIN);
-  //mySwitch.setPulseLength(20000000);
-  //mySwitch.setRepeatTransmit(1);
-
 
   Serial.begin(9600);
 
 }
 
-void send_morse(const char* word){
-  Serial.println("Sending ");
-  for(const char* p = word; *p; p++){
-    Serial.println(*p);
-    char* morsePattern = alpha[*p - 97];
-    Serial.println(morsePattern);
-    //Serial.println(morsePattern);
-    for(const char* m = morsePattern; *m; m++){
-      digitalWrite(TPIN, HIGH);
-      if(*m == '.'){
-        delay(DIT*TIME);
-      } else {
-        delay(DAH*TIME);
-      }
-      digitalWrite(TPIN, LOW);
-      delay(INTRA*TIME);
-    }
-    delay(INTER*TIME);
-  }
-  delay(WORD*TIME);
-
-}
-
+// By ADS protocol: To send a one, we should transmit 0b10.
+// Holds transmission pin HIGH then LOW, each for a duration of (bit transmission period)/2
 void send_one() {
   //Serial.println("Sending One");
   digitalWrite(TPIN, HIGH);
@@ -96,8 +34,9 @@ void send_one() {
   delay(TIME_ADSMS / 2);
 }
 
+// By ADS protocol: To send a zero, we should transmit 0b01.
+// Holds transmission pin LOW then HIGH, each for a duration of (bit transmission period)/2
 void send_zero(){
-  //Serial.println("Sending Zero");
   digitalWrite(TPIN, LOW);
   delay(TIME_ADSMS / 2);
   digitalWrite(TPIN, HIGH);
@@ -105,14 +44,15 @@ void send_zero(){
   digitalWrite(TPIN, LOW);
 }
 
+// Keeps transmission pin LOW for one bit transmission period.
 void send_nothing() {
   digitalWrite(TPIN, LOW);
   delay(TIME_ADSMS);
   digitalWrite(TPIN, LOW);
 }
 
+// Sends the header described by ADS.
 void send_ads_header(){
-  //Serial.println("Sending Header");
   send_one();
   send_one();
   send_nothing();
@@ -121,28 +61,14 @@ void send_ads_header(){
   send_nothing();
   send_nothing(); 
   send_nothing();
-  //Serial.println("Header Finished"); 
 }
 
-void send_ads_char(const char c){
-  send_ads_header();
-  for(int i = 0; i < 8; i++){
-    int bit = (c >> i) & 1;
-    if (bit == 1){
-      send_one();
-    } 
-    else {
-      send_zero();
-    }
-  }    
 
-}
-
-// receives an 8 bit char, and transmits it using ADS standard
-// sends bits from right to left:
-// e.g. 'a' = 97 = 0110 0001
-// these bits would be transmitted in the following order: 1000 0110
-// receiver is in charge of reversing the order of bits
+// Receives an 8 bit char, c, and transmits it using ADS standard.
+// Sends bits from right to left:
+// e.g. 'a' = 97 = 0110 0001 => 
+// These bits would be transmitted in the following order: 1000 0110
+// receiver is in charge of reversing the order of bits.
 void transmit(const char c){
   for(int i = 0; i < 8; i++){
     int bit = (c >> i) & 1;
@@ -165,10 +91,14 @@ void high_low_test(){
   }
 }
 
-char extract_bit(char d, int pos){
-  return (d >> pos) & 0x1;
+// Helper function for our hamming encoder.
+// Returns the i'th bit from the right of char d.
+char extract_bit(char d, int i){
+  return (d >> i) & 0x1;
 }
 
+// Hamming Encoder.
+// Takes in 4 bits from a byte, and returns the 8 bit hamming encoding.
 char hamming_encode_nibble(char half_byte){
   char d = 0xf & half_byte;
 
@@ -188,8 +118,10 @@ char hamming_encode_nibble(char half_byte){
   return encoded;
 }
 
-// current transmission transmits bits right to left
-// for(int i = 0; i < 8; i++) int bit = (c >> i) & 1
+// Transmits a char using ADS protocol.
+// The 8 bit char is split into its four lower and upper bits, each of which
+// is encoded using our hamming encoder. The ADS header is transmitted, then the hamming byte 
+// corresponding to the upper bits, followed by the hamming byte corresponding to the lower bits.
 void hamming_and_transmit_byte(char byte){
   char lower_bits = 0xf & byte;
   char upper_bits = 0xf0 & byte;
@@ -202,6 +134,10 @@ void hamming_and_transmit_byte(char byte){
   transmit(hamming_lower);
 }
 
+// Sends a message using the ADS protocol with hamming error correction.
+// For the provided char*, message, each byte of message is transmitted 
+// one at a time using hamming_and_transmit_byte(char). That is, each byte
+// will have its own preamble in the transmitted signal.
 void send(const char *message) {
   Serial.print("Sending message: ");
   Serial.println(message);
