@@ -124,7 +124,7 @@ char hamming_encode_nibble(char half_byte){
 // corresponding to the upper bits, followed by the hamming byte corresponding to the lower bits.
 void hamming_and_transmit_byte(char byte){
   char lower_bits = 0xf & byte;
-  char upper_bits = 0xf0 & byte;
+  char upper_bits = (0xf0 & byte) >> 4;
   
   char hamming_lower = hamming_encode_nibble(lower_bits);
   char hamming_upper = hamming_encode_nibble(upper_bits);
