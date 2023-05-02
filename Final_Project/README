@@ -1,0 +1,22 @@
+# Digital Systems Final Project: Wireless ASK Transmitter and Receiver
+
+Christian Martinez
+James Zhao
+
+*See the project proposal for a more complete description*
+
+In this project, we create a wireless ASK (Amplitude Shift Keying) connection between an Arduino transmitter and a SDR (software-defined radio) receiver. Our setup is capable of transmitting at 3 error-corrected bytes, or 3 characters, per second. 
+
+In the Radio_Transmitter folder, you will find our system architecture diagram and these files:
+
+Radio_Transmitter.ino   RCSwitch.cpp   RCSwitch.h  'Transmitter Software Architecture.png'
+
+Radio_Transmitter.ino contains code for our transmitter. It interactively reads user input from the keyboard and transmits it to the Arduino transmitter when the user presses "Enter". It transmits an ADS-B header before each character, ensuring that each character is detected. RCSwitch.cpp and RCSwitch.h were libraries that were used for testing. 
+
+In the Radio_Receiver folder, you will find these files:
+
+ FINAL_NOTEBOOK_PRJ.ipynb   keystream.txt  'Receiver Prototyping.ipynb'  'Receiver Software Architecture.png'
+
+FINAL_NOTEBOOK_PRJ.ipynb contains the code for demodulating and decoding and displaying the ASK signal. We also did some encryption prototyping with the one-time pad data in keystream.txt by XORing the transmitted and received bytes to perform encryption and decryption. You can run it with
+
+jupyter-nobteook FINAL_NOTEBOOK_PRJ.ipynb and run the cells. Specifically, navigate to the test section (the last section) and run the "test real streaming" test in order to read and decode the characters from the RTL SDR in real time. A RTL28**U dongle us required which can be purchased on rtl-sdr.com in order to do the demo.
